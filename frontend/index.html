@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CalmAid — Emergency First Aid AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --red: #e8372a;
+    --red-dim: #7a1a13;
+    --bg: #080b0f;
+    --bg2: #0e1318;
+    --bg3: #141c24;
+    --border: #1e2c3a;
+    --text: #d8e8f0;
+    --text-dim: #5a7a90;
+    --green: #2adb8e;
+    --amber: #f0a020;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(232,55,42,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,55,42,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 500px;
+    background: radial-gradient(ellipse, rgba(232,55,42,0.08) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .container {
+    position: relative; z-index: 1;
+    max-width: 760px; margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  header {
+    padding: 52px 0 40px;
+    display: flex; flex-direction: column;
+    align-items: flex-start; gap: 12px;
+    animation: fadeInUp 0.5s ease both;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(232,55,42,0.12);
+    border: 1px solid rgba(232,55,42,0.3);
+    border-radius: 4px; padding: 4px 10px;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    color: var(--red); letter-spacing: 0.1em; text-transform: uppercase;
+    animation: pulse-border 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse-border {
+    0%,100% { border-color: rgba(232,55,42,0.3); }
+    50% { border-color: rgba(232,55,42,0.7); }
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--red);
+    animation: blink 1.2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(3rem, 8vw, 5rem);
+    line-height: 0.95; letter-spacing: -0.02em; color: #fff;
+  }
+  h1 em { font-style: italic; color: var(--red); }
+  .subtitle {
+    font-size: 0.95rem; color: var(--text-dim);
+    max-width: 400px; line-height: 1.6; margin-top: 4px;
+  }
+  .disclaimer-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(240,160,32,0.08);
+    border: 1px solid rgba(240,160,32,0.25);
+    border-radius: 6px; padding: 10px 14px;
+    font-size: 0.8rem; color: var(--amber); margin-bottom: 36px;
+  }
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px; margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:focus-within { border-color: rgba(232,55,42,0.4); }
+  .card-label {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step-num {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--bg3); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: var(--red); font-weight: 500;
+  }
+  .mic-area { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .mic-btn {
+    position: relative; width: 72px; height: 72px;
+    border-radius: 50%; border: 2px solid var(--red);
+    background: rgba(232,55,42,0.1); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .mic-btn:hover { background: rgba(232,55,42,0.2); transform: scale(1.05); }
+  .mic-btn.listening {
+    background: var(--red); border-color: var(--red);
+    animation: mic-pulse 1s ease-in-out infinite;
+  }
+  @keyframes mic-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(232,55,42,0.4); }
+    50% { box-shadow: 0 0 0 18px rgba(232,55,42,0); }
+  }
+  .mic-btn svg { width: 28px; height: 28px; fill: var(--text); }
+  .mic-btn.listening svg { fill: #fff; }
+  .mic-info { flex: 1; min-width: 180px; }
+  .mic-status {
+    font-size: 0.85rem; color: var(--text-dim);
+    margin-bottom: 6px; min-height: 20px; transition: color 0.2s;
+  }
+  .mic-status.active { color: var(--red); }
+  textarea {
+    width: 100%; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+    line-height: 1.6; resize: vertical; min-height: 90px;
+    margin-top: 14px; outline: none; transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: rgba(232,55,42,0.5); }
+  textarea::placeholder { color: var(--text-dim); }
+  .camera-area { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  .cam-preview {
+    width: 160px; height: 120px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg3);
+    object-fit: cover; display: none;
+  }
+  .cam-preview.visible { display: block; }
+  .cam-controls { display: flex; flex-direction: column; gap: 8px; }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 16px; border-radius: 7px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-dim); font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-ghost:hover { border-color: rgba(232,55,42,0.4); color: var(--text); }
+  #file-input { display: none; }
+  .submit-btn {
+    width: 100%; padding: 18px; background: var(--red);
+    border: none; border-radius: 10px; color: #fff;
+    font-family: 'DM Serif Display', serif; font-size: 1.3rem;
+    letter-spacing: 0.01em; cursor: pointer; transition: all 0.2s;
+    margin-top: 8px; display: flex; align-items: center;
+    justify-content: center; gap: 10px;
+  }
+  .submit-btn:hover { background: #c52b1f; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { background: var(--red-dim); cursor: not-allowed; transform: none; }
+
+  /* ── RESPONSE ── */
+  .response-section {
+    margin-top: 24px; opacity: 0; transform: translateY(16px);
+    transition: all 0.4s ease; pointer-events: none;
+  }
+  .response-section.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .response-card {
+    background: var(--bg2); border: 1px solid rgba(42,219,142,0.2);
+    border-radius: 12px; overflow: hidden;
+  }
+  .response-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; border-bottom: 1px solid var(--border);
+    background: rgba(42,219,142,0.04);
+  }
+  .response-header-left {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--green);
+  }
+  .response-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  .speak-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 6px;
+    border: 1px solid rgba(42,219,142,0.3);
+    background: rgba(42,219,142,0.08); color: var(--green);
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .speak-btn:hover { background: rgba(42,219,142,0.15); }
+  .speak-btn.speaking { animation: speak-pulse 1s ease-in-out infinite; }
+  @keyframes speak-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .response-body {
+    padding: 28px 24px; font-size: 1.05rem;
+    line-height: 1.85; color: var(--text); min-height: 60px;
+  }
+
+  /* streaming cursor blink */
+  .cursor {
+    display: inline-block; width: 2px; height: 1.1em;
+    background: var(--green); margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: cursor-blink 0.7s ease-in-out infinite;
+  }
+  @keyframes cursor-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* waveform */
+  .waveform { display: none; align-items: center; gap: 3px; height: 20px; margin-left: 8px; }
+  .waveform.active { display: flex; }
+  .wave-bar {
+    width: 3px; background: var(--green); border-radius: 2px;
+    animation: wave-anim 0.8s ease-in-out infinite;
+  }
+  .wave-bar:nth-child(2){animation-delay:0.1s}
+  .wave-bar:nth-child(3){animation-delay:0.2s}
+  .wave-bar:nth-child(4){animation-delay:0.3s}
+  .wave-bar:nth-child(5){animation-delay:0.15s}
+  @keyframes wave-anim { 0%,100%{height:4px} 50%{height:18px} }
+
+  /* loading bar */
+  .loading-bar {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+    background-size: 200% 100%;
+    animation: loading-move 1.2s linear infinite;
+    border-radius: 2px; display: none; margin-bottom: 12px;
+  }
+  @keyframes loading-move { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .loading-bar.active { display: block; }
+
+  footer {
+    text-align: center; padding: 40px 0 20px;
+    font-size: 0.78rem; color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+  }
+  /* GSAP handles entrance animations — cards start hidden */
+  header, .card, .disclaimer-banner, .submit-btn { opacity: 0; }
+  /* Particle canvas */
+  #particle-canvas {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0; opacity: 0.5;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</style>
+</head>
+<body>
+<canvas id="particle-canvas"></canvas>
+<div class="container">
+
+  <header>
+    <div class="badge"><div class="badge-dot"></div>AI First Aid · Live Streaming</div>
+    <h1>Calm<em>Aid</em></h1>
+    <p class="subtitle">Speak the emergency. Show the injury. Get calm, clear instructions — live.</p>
+  </header>
+
+  <div class="disclaimer-banner">
+    ⚠️ &nbsp;For general guidance only. Always call <strong>911</strong> for life-threatening emergencies.
+  </div>
+
+  <!-- Step 1: Voice -->
+  <div class="card">
+    <div class="card-label"><div class="step-num">1</div> Describe the situation</div>
+    <div class="mic-area">
+      <button class="mic-btn" id="micBtn" title="Click to speak">
+        <svg viewBox="0 0 24 24"><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21h2v-2.07A8.001 8.001 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8.001 8.001 0 0 0 7 7.93z"/></svg>
+      </button>
+      <div class="mic-info">
+        <div class="mic-status" id="micStatus">Click mic to start speaking</div>
+        <div style="font-size:0.8rem;color:var(--text-dim)">Chrome recommended · English</div>
+      </div>
+    </div>
+    <textarea id="userText" placeholder="e.g. My friend burned their hand on a stove, skin looks red and blistering…" rows="3"></textarea>
+  </div>
+
+  <!-- Step 2: Camera -->
+  <div class="card">
+    <div class="card-label"><div class="step-num">2</div> Show the injury <span style="font-size:0.7rem;color:var(--text-dim);margin-left:6px;font-family:DM Sans;text-transform:none;letter-spacing:0">optional</span></div>
+    <div class="camera-area">
+      <img id="preview" class="cam-preview" alt="Injury preview"/>
+      <div class="cam-controls">
+        <button class="btn-ghost" id="snapBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0-2a5 5 0 1 1 0 10A5 5 0 0 1 12 7zM2 6h3.5l2-2h9l2 2H22a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
+          Take Photo
+        </button>
+        <button class="btn-ghost" id="uploadBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+          Upload Image
+        </button>
+        <button class="btn-ghost" id="clearImgBtn" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          Clear
+        </button>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept="image/*"/>
+    <video id="camVideo" style="display:none" autoplay playsinline></video>
+    <canvas id="camCanvas" style="display:none"></canvas>
+  </div>
+
+  <div class="loading-bar" id="loadingBar"></div>
+
+  <button class="submit-btn" id="submitBtn">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21L23 12 1 3v7l15 2-15 2v7z"/></svg>
+    Get First Aid Instructions
+  </button>
+
+  <!-- Response -->
+  <div class="response-section" id="responseSection">
+    <div class="response-card">
+      <div class="response-header">
+        <div class="response-header-left">
+          <div class="response-dot"></div>
+          CalmAid · Live
+          <div class="waveform" id="waveform">
+            <div class="wave-bar" style="height:8px"></div>
+            <div class="wave-bar" style="height:14px"></div>
+            <div class="wave-bar" style="height:18px"></div>
+            <div class="wave-bar" style="height:12px"></div>
+            <div class="wave-bar" style="height:6px"></div>
+          </div>
+        </div>
+        <button class="speak-btn" id="speakBtn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+          Replay
+        </button>
+      </div>
+      <div class="response-body" id="responseBody"></div>
+    </div>
+  </div>
+
+</div>
+<footer>CalmAid is not a substitute for professional medical advice · © 2025</footer>
+
+<script>
+const API_BASE = window.location.origin;
+let imageB64 = "";
+let recognition = null;
+let isListening = false;
+let fullResponseText = "";
+
+// ── TTS SENTENCE QUEUE ────────────────────────────────────────────────────────
+// Speaks text in sentence-sized chunks as they arrive from the stream
+const ttsQueue = [];
+let ttsActive = false;
+let ttsBuffer = "";
+
+function enqueueSentences(newText) {
+  ttsBuffer += newText;
+  // Split on sentence boundaries
+  const sentences = ttsBuffer.split(/(?<=[.!?])\s+/);
+  // Keep last incomplete fragment in buffer
+  ttsBuffer = sentences.pop() || "";
+  sentences.forEach(s => { if (s.trim()) ttsQueue.push(s.trim()); });
+  if (!ttsActive) drainTTSQueue();
+}
+
+function flushTTSBuffer() {
+  if (ttsBuffer.trim()) {
+    ttsQueue.push(ttsBuffer.trim());
+    ttsBuffer = "";
+  }
+  if (!ttsActive) drainTTSQueue();
+}
+
+function drainTTSQueue() {
+  if (ttsQueue.length === 0) {
+    ttsActive = false;
+    document.getElementById("waveform").classList.remove("active");
+    const btn = document.getElementById("speakBtn");
+    btn.classList.remove("speaking");
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg> Replay`;
+    return;
+  }
+  ttsActive = true;
+  document.getElementById("waveform").classList.add("active");
+  const btn = document.getElementById("speakBtn");
+  btn.classList.add("speaking");
+  btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Speaking…`;
+
+  const sentence = ttsQueue.shift();
+  const utt = new SpeechSynthesisUtterance(sentence);
+  utt.rate = 0.93; utt.pitch = 1.0; utt.lang = "en-US";
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Karen"));
+  if (preferred) utt.voice = preferred;
+  utt.onend = utt.onerror = () => drainTTSQueue();
+  window.speechSynthesis.speak(utt);
+}
+
+function stopTTS() {
+  window.speechSynthesis.cancel();
+  ttsQueue.length = 0;
+  ttsBuffer = "";
+  ttsActive = false;
+}
+
+// ── MIC ───────────────────────────────────────────────────────────────────────
+const micBtn = document.getElementById("micBtn");
+const micStatus = document.getElementById("micStatus");
+
+micBtn.addEventListener("click", () => isListening ? stopListening() : startListening());
+
+function startListening() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { micStatus.textContent = "❌ Use Chrome for mic support"; return; }
+  recognition = new SR();
+  recognition.continuous = true; recognition.interimResults = true; recognition.lang = "en-US";
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add("listening");
+    micStatus.textContent = "🔴 Listening… speak now";
+    micStatus.classList.add("active");
+  };
+  recognition.onresult = (e) => {
+    let t = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+    document.getElementById("userText").value = t;
+  };
+  recognition.onerror = (e) => {
+    micStatus.textContent = "⚠️ " + e.error + ". Type instead.";
+    micStatus.classList.remove("active"); isListening = false;
+    micBtn.classList.remove("listening");
+  };
+  recognition.onend = () => {
+    if (isListening) {
+      micStatus.textContent = "✅ Done. Edit below if needed.";
+      micStatus.classList.remove("active"); isListening = false;
+      micBtn.classList.remove("listening");
+    }
+  };
+  recognition.start();
+}
+
+function stopListening() {
+  if (recognition) recognition.stop();
+  isListening = false; micBtn.classList.remove("listening");
+  micStatus.textContent = "✅ Done."; micStatus.classList.remove("active");
+}
+
+// ── CAMERA ────────────────────────────────────────────────────────────────────
+const snapBtn = document.getElementById("snapBtn");
+const uploadBtn = document.getElementById("uploadBtn");
+const clearImgBtn = document.getElementById("clearImgBtn");
+const preview = document.getElementById("preview");
+const fileInput = document.getElementById("file-input");
+
+snapBtn.addEventListener("click", async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const video = document.getElementById("camVideo");
+    video.srcObject = stream; await video.play();
+    setTimeout(() => {
+      const canvas = document.getElementById("camCanvas");
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+      imageB64 = dataUrl.split(",")[1];
+      preview.src = dataUrl; preview.classList.add("visible");
+      clearImgBtn.style.display = "flex";
+      stream.getTracks().forEach(t => t.stop());
+    }, 800);
+  } catch { alert("Camera denied. Upload an image instead."); }
+});
+
+uploadBtn.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    imageB64 = dataUrl.split(",")[1];
+    preview.src = dataUrl; preview.classList.add("visible");
+    clearImgBtn.style.display = "flex";
+  };
+  reader.readAsDataURL(file);
+});
+clearImgBtn.addEventListener("click", () => {
+  imageB64 = ""; preview.classList.remove("visible");
+  clearImgBtn.style.display = "none"; fileInput.value = "";
+});
+
+// ── STREAMING SUBMIT ──────────────────────────────────────────────────────────
+const submitBtn = document.getElementById("submitBtn");
+
+submitBtn.addEventListener("click", async () => {
+  const text = document.getElementById("userText").value.trim();
+  if (!text && !imageB64) { alert("Please describe the situation or provide an image."); return; }
+
+  // Reset
+  stopTTS();
+  fullResponseText = "";
+  const body = document.getElementById("responseBody");
+  body.innerHTML = '<span class="cursor"></span>';
+
+  // Show response section immediately
+  const section = document.getElementById("responseSection");
+  section.classList.add("visible");
+  section.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="animation:spin 1s linear infinite"><path d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8z"/></svg> Analyzing…`;
+  document.getElementById("loadingBar").classList.add("active");
+
+  try {
+    const res = await fetch(`${API_BASE}/api/aid/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, image_b64: imageB64 })
+    });
+
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    // Hide loading bar once stream starts
+    document.getElementById("loadingBar").classList.remove("active");
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // keep incomplete line
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const payload = JSON.parse(line.slice(6));
+          if (payload.error) throw new Error(payload.error);
+          if (payload.done) {
+            // Stream finished — flush remaining TTS buffer
+            flushTTSBuffer();
+            // Remove cursor
+            const cursor = body.querySelector(".cursor");
+            if (cursor) cursor.remove();
+            break;
+          }
+          if (payload.chunk) {
+            fullResponseText += payload.chunk;
+            // Update display — insert text before cursor
+            const cursor = body.querySelector(".cursor");
+            const textNode = document.createTextNode(payload.chunk);
+            if (cursor) body.insertBefore(textNode, cursor);
+            else body.appendChild(textNode);
+            // Feed to TTS queue
+            enqueueSentences(payload.chunk);
+          }
+        } catch (parseErr) { /* skip malformed */ }
+      }
+    }
+
+  } catch (err) {
+    body.textContent = "⚠️ Error: " + err.message;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21L23 12 1 3v7l15 2-15 2v7z"/></svg> Get First Aid Instructions`;
+    document.getElementById("loadingBar").classList.remove("active");
+  }
+});
+
+// ── REPLAY BUTTON ─────────────────────────────────────────────────────────────
+document.getElementById("speakBtn").addEventListener("click", () => {
+  if (fullResponseText) {
+    stopTTS();
+    enqueueSentences(fullResponseText);
+    flushTTSBuffer();
+  }
+});
+
+window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
+// ── GSAP ANIMATIONS ───────────────────────────────────────────────────────────
+
+// Set initial hidden state FIRST so elements start offscreen
+gsap.set("header", { opacity: 0, y: 28 });
+gsap.set(".disclaimer-banner", { opacity: 0, y: 16 });
+gsap.set(".card", { opacity: 0, y: 24 });
+gsap.set(".submit-btn", { opacity: 0, y: 20 });
+
+// 1. PAGE LOAD — staggered entrance
+gsap.timeline({ delay: 0.15 })
+  .to("header", {
+    opacity: 1, y: 0, duration: 0.7, ease: "power3.out", clearProps: "transform"
+  })
+  .to(".disclaimer-banner", {
+    opacity: 1, y: 0, duration: 0.5, ease: "power2.out", clearProps: "transform"
+  }, "-=0.3")
+  .to(".card", {
+    opacity: 1, y: 0, duration: 0.55, ease: "power2.out", stagger: 0.15, clearProps: "transform"
+  }, "-=0.2")
+  .to(".submit-btn", {
+    opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.4)", clearProps: "transform"
+  }, "-=0.1");
+
+// 2. SUBMIT BUTTON — pulse + shake on click
+submitBtn.addEventListener("mousedown", () => {
+  if (submitBtn.disabled) return;
+  gsap.timeline()
+    .to(submitBtn, { scale: 0.96, duration: 0.08, ease: "power2.in" })
+    .to(submitBtn, { scale: 1.03, duration: 0.12, ease: "power2.out" })
+    .to(submitBtn, {
+      x: -5, duration: 0.05, ease: "power1.inOut",
+      yoyo: true, repeat: 5
+    }, "-=0.05")
+    .to(submitBtn, { x: 0, scale: 1, duration: 0.1, ease: "power2.out" });
+});
+
+// 3. RESPONSE REVEAL — GSAP animates when .visible class is added
+// MutationObserver watches for the class change triggered by the submit handler
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach(m => {
+    if (m.target.id === "responseSection" && m.target.classList.contains("visible")) {
+      // Kill CSS transition temporarily, let GSAP own it
+      gsap.fromTo("#responseSection",
+        { opacity: 0, y: 40, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "expo.out", clearProps: "transform,scale" }
+      );
+      gsap.fromTo(".response-card",
+        { boxShadow: "0 0 0px rgba(42,219,142,0)" },
+        { boxShadow: "0 0 40px rgba(42,219,142,0.12)", duration: 1, ease: "power2.out" }
+      );
+    }
+  });
+});
+observer.observe(document.getElementById("responseSection"), { attributes: true, attributeFilter: ["class"] });
+
+// 4. BACKGROUND PARTICLES
+(function initParticles() {
+  const canvas = document.getElementById("particle-canvas");
+  const ctx = canvas.getContext("2d");
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  const COUNT = 38;
+  const RED = "232,55,42";
+  const GREEN = "42,219,142";
+
+  for (let i = 0; i < COUNT; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.6 + 0.4,
+      color: Math.random() > 0.75 ? GREEN : RED,
+      alpha: Math.random() * 0.4 + 0.08,
+      vx: (Math.random() - 0.5) * 0.18,
+      vy: (Math.random() - 0.5) * 0.18,
+      pulse: Math.random() * Math.PI * 2,
+      pulseSpeed: 0.008 + Math.random() * 0.012
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      p.pulse += p.pulseSpeed;
+      const a = p.alpha + Math.sin(p.pulse) * 0.12;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.color},${a})`;
+      ctx.fill();
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W;
+      if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H;
+      if (p.y > H) p.y = 0;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
