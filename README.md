@@ -1,222 +1,175 @@
-# CalmAid -- AI Emergency First Aid Assistant 🚑
+# 🩺 CalmAid — Emergency First Aid AI Agent
 
-CalmAid is an AI-powered emergency first aid assistant that provides
-instant step‑by‑step guidance during emergencies using voice, text, and
-image input.
+> Speak the emergency. Show the injury. Get calm, step-by-step instructions — live.
 
-The system analyzes the situation using Google Gemini AI, streams
-responses in real time, and reads instructions aloud so users can act
-quickly in critical situations.
+**Gemini Live Agent Challenge · Live Agents category**
 
-⚠️ CalmAid provides general first aid guidance only and is not a
-substitute for professional medical help.
+---
 
-------------------------------------------------------------------------
+## 🎯 What It Does
 
-# Demo Overview
+CalmAid is a multimodal AI first aid assistant. In an emergency, you:
 
-CalmAid allows users to:
+1. **Speak** — describe the situation using your mic
+2. **Show** — take a photo of the injury with your camera
+3. **Hear** — CalmAid streams instructions back word-by-word and reads them aloud simultaneously
 
--   Describe an emergency using voice or text
--   Upload or capture an image of the injury
--   Receive AI-generated first aid instructions instantly
--   See instructions stream in real time
--   Hear the instructions spoken aloud
+No typing. No waiting. Real-time voice + vision + streaming response.
 
-------------------------------------------------------------------------
+---
 
-# Key Features
+## ✨ Features
 
-## 🎙 Voice Input
+- 🎙️ **Voice input** — Web Speech API, no setup required
+- 👁️ **Vision** — Camera snap or image upload analyzed by Gemini
+- ⚡ **Live streaming** — Response streams word-by-word via Server-Sent Events
+- 🔊 **Auto TTS** — Speaks in sentence chunks as they arrive, not after
+- 🛡️ **Safety-first** — System prompt enforces disclaimers and 911 escalation
+- 🎨 **GSAP animations** — Staggered page load, response reveal, particle background
 
-Uses the Web Speech API to convert speech into text for describing the
-emergency.
+---
 
-## 📝 Text Input
+## 🏗️ Architecture
 
-Users can manually type the situation.
-
-## 📷 Image Analysis
-
-Users can upload or capture images of injuries to improve AI
-understanding.
-
-## ⚡ Real-Time Streaming AI
-
-Responses are streamed from the AI model using Server-Sent Events (SSE).
-
-## 🔊 Voice Instructions
-
-Instructions are automatically spoken aloud using Text-to-Speech (TTS).
-
-## 🎨 Interactive UI
-
-Modern responsive interface with animations and live updates.
-
-## 🐳 Docker Deployment
-
-Runs fully inside a Docker container for simple deployment.
-
-------------------------------------------------------------------------
-
-# System Architecture
-
-User → Frontend (Voice/Text/Image) → FastAPI Backend → Gemini AI →
-Streaming Response → Frontend UI + Voice Output
-
-Main components:
-
-Frontend - HTML - CSS - JavaScript - Web Speech API - Camera API
-
-Backend - FastAPI - Pillow - Google GenAI SDK
-
-AI - Gemini 2.5 Flash
-
-Infrastructure - Docker - Uvicorn
-
-------------------------------------------------------------------------
-
-# Project Structure
-
-    CalmAid
+```
+User (Chrome Browser)
     │
-    ├── backend
-    │   └── main.py
+    ├── 🎙️ Web Speech API → text transcript
+    ├── 📷 Camera / File Upload → base64 image
     │
-    ├── frontend
-    │   └── index.html
+    ▼
+FastAPI Backend (Google Cloud Run)
     │
-    ├── requirements.txt
+    ├── google-genai SDK
+    │       └── Gemini 2.5 Flash
+    │               ├── Vision (image analysis)
+    │               └── Streaming (SSE chunks)
     │
-    ├── Dockerfile
+    ├── Secret Manager (API key)
     │
-    └── README.md
-
-------------------------------------------------------------------------
-
-# Installation
-
-## 1. Clone the repository
-
-    git clone https://github.com/YOUR_USERNAME/CalmAid.git
-    cd CalmAid
-
-## 2. Install dependencies
-
-    pip install -r requirements.txt
-
-## 3. Set environment variable
-
-Linux / Mac
-
-    export GEMINI_API_KEY=your_api_key_here
-
-Windows
-
-    set GEMINI_API_KEY=your_api_key_here
-
-------------------------------------------------------------------------
-
-# Run the Server
-
-    uvicorn backend.main:app --host 0.0.0.0 --port 8080
-
-Open in browser:
-
-http://localhost:8080
-
-------------------------------------------------------------------------
-
-# Run with Docker
-
-Build container:
-
-    docker build -t calmaid .
-
-Run container:
-
-    docker run -p 8080:8080 -e GEMINI_API_KEY=your_api_key calmaid
-
-Open:
-
-http://localhost:8080
-
-------------------------------------------------------------------------
-
-# API Endpoint
-
-## POST /api/aid/stream
-
-Streams first aid instructions from the AI model.
-
-Request:
-
-``` json
-{
-  "text": "My friend burned their hand on a stove",
-  "image_b64": "optional_base64_image"
-}
+    └── Static files (frontend/index.html)
+         │
+         └── Browser TTS (Web Speech Synthesis API)
 ```
 
-Response (Server-Sent Events):
+**Google Cloud services used:**
+- Cloud Run — serverless hosting
+- Secret Manager — secure API key storage
+- Cloud Build — container builds
+- Artifact Registry — Docker image storage
 
-    data: {"chunk": "..."}
-    data: {"chunk": "..."}
-    data: {"done": true}
+---
 
-------------------------------------------------------------------------
+## 🚀 Local Setup
 
-# Technologies Used
+### Prerequisites
+- Python 3.11+
+- Chrome browser
+- Gemini API key → [aistudio.google.com](https://aistudio.google.com)
 
-  Technology        Purpose
-  ----------------- ---------------------
-  FastAPI           Backend API
-  Google Gemini     AI reasoning
-  Pillow            Image processing
-  Web Speech API    Voice recognition
-  SpeechSynthesis   Text-to-speech
-  SSE               Real-time streaming
-  Docker            Containerization
-  Uvicorn           ASGI server
+### Steps
 
-------------------------------------------------------------------------
+```bash
+# 1. Clone
+git clone https://github.com/YOUR_USERNAME/calmaid-agent
+cd calmaid-agent
 
-# Safety Rules
+# 2. Create and activate venv
+python -m venv venv
 
-The AI assistant:
+# Windows
+venv\Scripts\activate
+# Mac/Linux
+source venv/bin/activate
 
--   Provides first aid guidance only
--   Does not diagnose medical conditions
--   Does not prescribe medication
--   Encourages users to call emergency services
+# 3. Install dependencies
+pip install -r requirements.txt
 
-Every response ends with:
+# 4. Set API key
+# Windows
+$env:GEMINI_API_KEY = "your-key-here"
+# Mac/Linux
+export GEMINI_API_KEY="your-key-here"
 
-"If this is a serious emergency, please call 911 immediately."
+# 5. Run
+uvicorn backend.main:app --reload --port 8080
+```
 
-------------------------------------------------------------------------
+Open **http://127.0.0.1:8080** in Chrome.
 
-# Future Improvements
+---
 
--   Multilingual voice support
--   Offline first aid knowledge base
--   Medical image classification models
--   Emergency contact integration
--   Mobile application
--   Location-based emergency numbers
+## ☁️ Deploy to Cloud Run
 
-------------------------------------------------------------------------
+### Prerequisites
+- [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed and authenticated
+- GCP project with billing enabled
+- APIs enabled: Cloud Run, Cloud Build, Secret Manager
 
-# Disclaimer
+```bash
+# 1. Authenticate
+gcloud auth login
+gcloud auth configure-docker
 
-CalmAid is intended for educational and guidance purposes only.
+# 2. Edit deploy.sh — set your PROJECT_ID
+# 3. Run
+$env:GEMINI_API_KEY = "your-key-here"
+bash scripts/deploy.sh
+```
 
-It is not a medical device and should not replace professional medical
-advice, diagnosis, or treatment.
+The script automatically:
+- Stores API key in Secret Manager
+- Builds Docker image via Cloud Build
+- Deploys to Cloud Run with secret injected
 
-In case of emergency, always contact local emergency services
-immediately.
+---
 
-------------------------------------------------------------------------
+## 📦 Tech Stack
 
-# License
+| Layer | Technology |
+|---|---|
+| Frontend | Vanilla HTML/CSS/JS + GSAP 3 |
+| Voice Input | Web Speech API (browser-native) |
+| Voice Output | Web Speech Synthesis API (browser-native) |
+| Backend | FastAPI + Uvicorn |
+| AI Model | Gemini 2.5 Flash (google-genai SDK) |
+| Streaming | Server-Sent Events (SSE) |
+| Hosting | Google Cloud Run |
+| Secrets | Google Secret Manager |
+| Container | Docker via Cloud Build |
+
+---
+
+## 🗂️ Project Structure
+
+```
+calmaid-agent/
+├── backend/
+│   └── main.py          # FastAPI app, SSE streaming endpoint
+├── frontend/
+│   └── index.html       # Full UI — HTML/CSS/JS/GSAP
+├── scripts/
+│   └── deploy.sh        # One-command Cloud Run deployment
+├── Dockerfile           # Alpine-based Python container
+├── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+---
+
+## 🔐 Safety Design
+
+- System prompt prohibits diagnosis or medication advice
+- Every response ends with 911 escalation reminder
+- Gemini safety filters active
+- API key stored in Secret Manager, never hardcoded
+
+---
+
+## 🏆 Hackathon
+
+- **Challenge:** Gemini Live Agent Challenge 2025
+- **Category:** Live Agents 🗣️
+- **Mandatory tech:** Google GenAI SDK, Google Cloud Run
