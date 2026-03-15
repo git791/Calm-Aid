@@ -159,7 +159,33 @@ calmaid-agent/
 
 ---
 
-## 🔐 Safety Design
+## 🧪 Reproducible Testing
+
+Judges can verify the project works in two ways:
+
+### Option A — Live URL (fastest)
+The deployed Cloud Run URL is submitted via the submission portal in order to preserve API credits. Visit it directly in Chrome:
+1. Type a description e.g. `"My friend burned their hand, skin is red and blistering"`
+2. Optionally upload any image
+3. Click **Get First Aid Instructions**
+4. Text streams in word-by-word and audio plays automatically
+
+### Option B — Run locally
+Follow the [Local Setup](#-local-setup) steps above. Requires a Gemini API key from [aistudio.google.com](https://aistudio.google.com).
+
+### Verify streaming works
+Open Chrome DevTools → Network tab → submit a query → click the `stream` request → Response tab should show:
+```
+data: {"chunk": "Take a deep breath"}
+data: {"chunk": ", we can help."}
+...
+data: {"done": true}
+```
+
+### Verify GCP deployment
+```bash
+gcloud run services describe calmaid-agent --region us-central1
+```
 
 - System prompt prohibits diagnosis or medication advice
 - Every response ends with 911 escalation reminder
