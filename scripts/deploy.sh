@@ -7,12 +7,10 @@
 
 set -e
 
-# ── EDIT THESE ────────────────────────────────────────────────
-PROJECT_ID="your-gcp-project-id"        # <- replace
+PROJECT_ID="your-gcp-project-id"        
 REGION="us-central1"
 SERVICE_NAME="calmaid-agent"
 IMAGE_NAME="gcr.io/$PROJECT_ID/$SERVICE_NAME"
-# ─────────────────────────────────────────────────────────────
 
 echo "🔧 Setting project..."
 gcloud config set project $PROJECT_ID
