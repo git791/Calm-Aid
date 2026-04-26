@@ -199,3 +199,13 @@ gcloud run services describe calmaid-agent --region us-central1
 - **Challenge:** Gemini Live Agent Challenge 2025
 - **Category:** Live Agents 🗣️
 - **Mandatory tech:** Google GenAI SDK, Google Cloud Run
+
+---
+
+## 👥 Team — Context Coders
+
+| Name | GitHub | LinkedIn |
+|------|--------|----------|
+| Mohammed Ayaan Adil Ahmed | [@git791](https://github.com/git791) | [LinkedIn](https://www.linkedin.com/in/mohammed-ayaan-adil-ahmed-540868311/) |
+| Bibi Sufiya Shariff | [@Suf78](https://github.com/Suf78) | [LinkedIn](https://www.linkedin.com/in/sufiya-shariff-b8a398337/) |
+
